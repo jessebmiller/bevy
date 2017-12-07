@@ -1,10 +1,9 @@
 pragma solidity ^0.4.4;
 
-import "zeppelin-solidity/contracts/ownership/Ownable.sol";
-import "zeppelin-solidity/contracts/token/StandardToken.sol";
+import "zeppelin-solidity/contracts//math/SafeMath.sol";
 
-
-contract Product is StandardToken, Ownable {
+contract ProductManager is Upgradable {
+  using SafeMath for uint256;
 
   /*
    * The author of an iteration may claim knowledge of their iteration for later
@@ -24,10 +23,27 @@ contract Product is StandardToken, Ownable {
   event IterationProposal(address author, bytes32 proof, string location);
 
   /*
+   * A shareholder upgraded to the next version of the contract
+   */
+  event Upgrade(address shareholder);
+
+  /*
+   * A shareholder downgraded to the previous version of the contract
+   */
+  event Downgrade(address shareholder);
+
+  /*
    * Log the payments the contract receives so the DApp can do what it needs to
    * with that information.
    */
   event Payment(uint256 amount, address from);
+
+  /*
+   * Just have the minimum parts of a standard coin needed to distribute shares
+   * to contributors. Start simple, then iterate when we learn.
+   */
+  uint256 public totalSupply;
+  mapping(address => uint256) balances;
 
   /*
    * Keep track of the production release and provide evidence to users that
@@ -36,28 +52,17 @@ contract Product is StandardToken, Ownable {
   bytes32 public proofOfProductionRelease;
 
   /*
-   * Clients may want to know what version of the contract the product they are
-   * working on is using.
-   * TODO: how can we migrate a product to a newer version of the contract?
+   * anyone may claim an iteration
    */
-  string public version = "0.0.1-alpha";
-
-  function claimIteration(address _author, bytes32 _proof) public {
+  function claimAuthorship(address _author, bytes32 _proof) public {
     AuthorshipClaim(_author, _proof);
-    /*
-     * TODO Iterate on this
-     * Claims as logs allow an author to register evidence, but allows authors
-     * to forget to register the evidence before making a proposal.
-     *
-     * Storing a registry of claims would allow the propose function to fail
-     * unless the proposed iteration were correctly claimed but would increase
-     * the gas cost of proposing iterations.
-     */
   }
 
+  /*
+   * anyone may propose an iteration
+   */
   function proposeIteration(address _author, bytes32 _proof, string _location) public {
     IterationProposal(_author, _proof, _location);
-    // TODO see comments in claimIteration
   }
 
   /*
@@ -67,6 +72,13 @@ contract Product is StandardToken, Ownable {
     balances[_author] = balances[_author].add(_amount);
     totalSupply = totalSupply.add(_amount);
     proofOfProductionRelease = _proof;
+  }
+
+  /*
+   * Implement minimal coin features needed to start as simple as possible.
+   */
+  function balanceOf(address _who) public view returns (uint256) {
+    return balances[_who];
   }
 
   /*
@@ -83,10 +95,40 @@ contract Product is StandardToken, Ownable {
    * now) held by the Product contract.
    */
   function redeem(uint256 _amount) public {
+    // make sure share holders have had enough time to upgrade if they want to
+    // if the new contract is making a lot of money, early upgraders shouldn't
+    // have an advantage
+    require(this.upgradeBlock + this.gracePeriod < block.number);
     uint256 value = shareValue();
     balances[msg.sender] = balances[msg.sender].sub(_amount);
     totalSupply = totalSupply.sub(_amount);
     msg.sender.transfer(value * _amount);
+  }
+
+  function moveContracts(address contract) internal {
+    // if the contract exists
+    require(this.nextVersion != address(0))
+    // if the caller is a shareholder
+    require(balances[msg.sender] != 0);
+    uint256 balance = balances[msg.sender];
+    uint256 value = this.shareValue();
+    // send their shares, and the ether backing them to the new contract
+    balances[msg.sender] = 0;
+    contract.receiveBalance(balance);
+    contract.transfer(value * balance);
+
+  function upgrade() public {
+    // move to the next versiond
+    this.moveContracts(this.nextVersion);
+    // Log it for people watching
+    Upgrade(msg.sender);
+  }
+
+  function downgrade() public {
+    // move to the previous version
+    this.moveContracts(this.previousVersion);
+    // Log it for people watching
+    Downgrade(msg.sender);
   }
 
   function () public payable {

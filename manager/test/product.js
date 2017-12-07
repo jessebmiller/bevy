@@ -55,7 +55,7 @@ contract("Product Events", function(accounts) {
         var product
         return Product.deployed().then(function(instance) {
             product = instance;
-            return product.claimIteration(bob, proof);
+            return product.claimAuthorship(bob, proof);
         }).then(function(result) {
             return product.AuthorshipClaim({author: bob});
         }).then(function(authorshipClaimFilter) {

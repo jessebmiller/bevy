@@ -5,5 +5,5 @@ if [ ! "$(docker ps -q -f name=testrpc)" ]; then
         docker rm testrpc
     fi
     echo "running testrpc"
-    docker run --rm -d --name testrpc -p 8545 desmart/testrpc:latest
+    docker run --rm -d --name testrpc -p 8545:8545 desmart/testrpc:latest
 fi
