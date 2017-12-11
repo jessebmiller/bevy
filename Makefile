@@ -1,7 +1,8 @@
 manager-test:
 	/bin/sh ./run-testrpc
 	docker build -t bevy:test manager
-	docker run --rm --link testrpc bevy:test npm test
+	docker run --rm --link testrpc bevy:test npm test || true
+	docker stop testrpc
 
 manager-local:
 	/bin/sh ./run-testrpc

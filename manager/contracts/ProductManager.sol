@@ -1,6 +1,8 @@
 pragma solidity ^0.4.4;
 
-import "zeppelin-solidity/contracts//math/SafeMath.sol";
+import "zeppelin-solidity/contracts/math/SafeMath.sol";
+import "./Upgradable.sol";
+
 
 contract ProductManager is Upgradable {
   using SafeMath for uint256;
@@ -98,35 +100,42 @@ contract ProductManager is Upgradable {
     // make sure share holders have had enough time to upgrade if they want to
     // if the new contract is making a lot of money, early upgraders shouldn't
     // have an advantage
-    require(this.upgradeBlock + this.gracePeriod < block.number);
+    require(upgradeBlock + gracePeriod < block.number);
     uint256 value = shareValue();
     balances[msg.sender] = balances[msg.sender].sub(_amount);
     totalSupply = totalSupply.sub(_amount);
     msg.sender.transfer(value * _amount);
   }
 
-  function moveContracts(address contract) internal {
+  function moveContracts(address a) internal {
     // if the contract exists
-    require(this.nextVersion != address(0))
+    require(a != address(0));
     // if the caller is a shareholder
     require(balances[msg.sender] != 0);
     uint256 balance = balances[msg.sender];
     uint256 value = this.shareValue();
     // send their shares, and the ether backing them to the new contract
     balances[msg.sender] = 0;
-    contract.receiveBalance(balance);
-    contract.transfer(value * balance);
+    ProductManager preferedContract = ProductManager(a);
+    preferedContract.receiveBalance(balance);
+    preferedContract.transfer(value * balance);
+  }
+
+  function receiveBalance(uint256 balance) public {
+    require(msg.sender == previousVersion);
+    balances[tx.origin].add(balance);
+  }
 
   function upgrade() public {
     // move to the next versiond
-    this.moveContracts(this.nextVersion);
+    moveContracts(nextVersion);
     // Log it for people watching
     Upgrade(msg.sender);
   }
 
   function downgrade() public {
     // move to the previous version
-    this.moveContracts(this.previousVersion);
+    moveContracts(previousVersion);
     // Log it for people watching
     Downgrade(msg.sender);
   }

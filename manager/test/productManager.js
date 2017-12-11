@@ -1,10 +1,7 @@
-var Product = artifacts.require("./Product.sol");
+var Product = artifacts.require("./ProductManager.sol");
 
 
-contract("Product", function(accounts) {
-
-    var alice = accounts[0]
-    var bob = accounts[1]
+contract("Product", ([alice, bob, ...accounts]) => {
 
     it("should start with zero supply", function() {
         return Product.deployed().then(function(instance) {
@@ -23,10 +20,7 @@ contract("Product", function(accounts) {
     });
 });
 
-contract("Product.transferOwnership", function(accounts) {
-
-    var alice = accounts[1];
-    var bob = accounts[0];
+contract("Product.transferOwnership", ([alice, bob, ...accounts]) => {
 
     it("should be able to transfer ownership", function () {
         var product
@@ -44,10 +38,7 @@ contract("Product.transferOwnership", function(accounts) {
     });
 });
 
-contract("Product Events", function(accounts) {
-
-    var alice = accounts[1];
-    var bob = accounts[0];
+contract("Product Events", ([alice, bob, ...accounts]) => {
 
     it("should log claims of authorship", function () {
         var proof = web3.sha3("Bob's iteration and a nonce or something too");
@@ -90,10 +81,7 @@ contract("Product Events", function(accounts) {
     });
 });
 
-contract("Product.acceptProposal", function(accounts) {
-
-    var alice = accounts[0];
-    var bob = accounts[1];
+contract("Product.acceptProposal", ([alice, bob, ...accounts]) => {
 
     it("should let the owner accept proposals", function () {
         var proof = web3.sha3("bob's iteration that alice wants to accept");
@@ -133,10 +121,7 @@ contract("Product.acceptProposal", function(accounts) {
     });
 });
 
-contract("Product fallback function", function(accounts) {
-
-    var alice = accounts[0];
-    var bob = accounts[1];
+contract("Product fallback function", ([alice, bob, ...accounts]) => {
 
     it("should be payable", function () {
         var product;
@@ -165,10 +150,7 @@ contract("Product fallback function", function(accounts) {
     });
 });
 
-contract("Product.shareValue", function(accounts) {
-
-    var alice = accounts[0];
-    var bob = accounts[1];
+contract("Product.shareValue", ([alice, bob, ...accounts]) => {
 
     it("should report the value of it's shares", function() {
         var product;
@@ -207,10 +189,7 @@ contract("Product.shareValue", function(accounts) {
     });
 });
 
-contract("Product.redeem", (accounts) => {
-
-    var alice = accounts[0];
-    var bob = accounts[1];
+contract("Product.redeem", ([alice, bob, ...accounts]) => {
 
     it("should convert shares to ether", () => {
         var product;

@@ -4,7 +4,7 @@ module.exports = {
             host: "testrpc",
             port: 8545,
             network_id: "*",
-            gas: 4600000,
+            gas: 6761676,
         }
     }
 };

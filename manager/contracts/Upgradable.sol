@@ -9,7 +9,7 @@ import "zeppelin-solidity/contracts/ownership/Ownable.sol";
  */
 contract Upgradable is Ownable {
 
-  event NewVersion(address nextVersion);
+  event NewVersion(address);
 
   address public previousVersion;
   address public nextVersion;
@@ -18,23 +18,33 @@ contract Upgradable is Ownable {
   // contract to allow everyone who wants to upgrade the chance to before folks
   // start redeeming the earnings of the new contract
   uint32 public gracePeriod;
-  uint32 public upgradeBlock;
+  uint256 public upgradeBlock;
 
-  function Upgradable(address _previousVersion, uint32 _gracePeriod) public {
-    _previousVersion.setNextVersion();
-    this.upgradeBlock = block.number;
-    this.gracePerios = _gracePeriod;
+  /*
+   * Once the new version of the contract is deployed, the owner can execute the
+   * upgrade.
+   */
+  function executeUpgrade(address _previousVersion, uint32 _gracePeriod) onlyOwner {
+    if (_previousVersion != address(0)) {
+      Upgradable pv = Upgradable(_previousVersion);
+      pv.setNextVersion();
+    }
+    upgradeBlock = block.number;
+    gracePeriod = _gracePeriod;
   }
 
   function setNextVersion() public {
     // must be set by a contract owned by this contract's owner.
-    require(msg.sender.getOwner() == this.owner);
-    this.nextVersion = msg.sender;
-    NewVersion(_nextVersion);
+    // future contract's executeUpgrade function will call this
+    Upgradable nextContract = Upgradable(msg.sender);
+    require(nextContract.owner() == owner);
+    nextVersion = msg.sender;
+    NewVersion(msg.sender);
   }
 
   // upgrade moves the sender's state to the next version
-  function upgrade() {}
+  function upgrade() public;
 
   // downgrade moves the sender's state to the previous version
-  function downgrade() {}
+  function downgrade() public;
+}
