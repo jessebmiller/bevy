@@ -1,15 +1,31 @@
-FROM node:alpine
+FROM golang:1.9-stretch as geth
 
-RUN npm install -g truffle
-RUN mkdir /dapp
-WORKDIR /dapp
-COPY ./package.json ./package.json
+RUN git clone https://github.com/ethereum/go-ethereum.git
+RUN cd go-ethereum && make all
 
-RUN npm install
+FROM ethereum/solc:stable as solc
 
-COPY ./truffle.js ./truffle.js
-COPY ./contracts ./contracts
+FROM python
 
-RUN truffle compile
+RUN apt-get update -y
+RUN apt-get install -y \
+  libssl-dev \
+  git \
+  build-essential \
+  cmake \
+  g++ \
+  gcc \
+  libboost-all-dev \
+  unzip
 
+WORKDIR /
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+
+COPY --from=geth /go/go-ethereum/build/bin/* /usr/local/bin/
+COPY --from=solc /usr/bin/solc /usr/bin/solc
+RUN mkdir /bevy
+WORKDIR /bevy
 COPY . .
+RUN pip install -e .
+

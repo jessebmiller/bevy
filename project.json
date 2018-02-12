@@ -1,0 +1,30 @@
+{
+    "version":"8",
+    "compilation":{
+        "contracts_source_dirs": ["./contracts"],
+        "import_remappings": []
+    },
+    "chains": {
+        "quail": {
+            "chain" : {
+                "class": "populus.chain.TemporaryGethChain"
+            },
+            "web3": {
+                "provider": {
+                    "class": "web3.providers.ipc.IPCProvider",
+                    "settings": {
+                        "ipc_path": "/bevy/chains/horton/chain_data/geth.ipc"
+                    }
+                }
+            },
+            "contracts": {
+                "backends": {
+                    "JSONFile": {"$ref": "contracts.backends.JSONFile"},
+                    "ProjectContracts": {
+                        "$ref": "contracts.backends.ProjectContracts"
+                    }
+                }
+            }
+        }
+    }
+}
